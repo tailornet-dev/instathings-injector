@@ -1,0 +1,103 @@
+#! /usr/bin/env python3
+from threading import Thread
+import argparse
+import sys
+import os
+from dataclasses import dataclass
+from ipaddress import ip_address as ipa
+from typing import List
+
+@dataclass
+class InjectorConf:
+    ip: str
+    password: str
+    user: str
+    slot_number: int
+    zips_dir: str
+
+class Injector:
+    conf: InjectorConf
+    thread: Thread
+
+    def __init__(self, conf: InjectorConf):
+        super()
+        self.conf = conf
+        self.thread = Thread(target=self.run)
+
+    def run(self):
+        zip_file = f"k{self.conf.slot_number}.zip"
+        ssh_flag="-o PubkeyAuthentication=no -o StrictHostKeyChecking=no"
+        remote_hostname_arg=f"{self.conf.user}@{self.conf.ip}"
+        scp_command=f"sshpass -p {self.conf.password} scp {ssh_flag} {self.conf.zips_dir}/{zip_file} {remote_hostname_arg}:/home/{self.conf.user}/{zip_file}"
+        launch_script_command = f"sshpass -p {self.conf.password} ssh {ssh_flag} {remote_hostname_arg}"
+        script = f"""
+        ls -l
+        exit
+        set -e
+        cd /home/{self.conf.user}
+        zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
+        unzip "$zip_file"
+        chmod 755 install.sh
+        ./install.sh
+        """
+        os.system(scp_command)
+        os.system(f"{launch_script_command} '{script}'")
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="starting from the ip, inject the certificates using pagination", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-i", "--page-items", dest="page_items", metavar="n", help="number of items (device) for each page to process", type=int, required=True)
+    parser.add_argument("-ps", "--pages", dest="pages", metavar="n", help="how many pages to process", type=int)
+    parser.add_argument("-pa", "--page", dest="page", metavar="n", help="manually provide the page number to process", type=int)
+    parser.add_argument("-ip", "--ip", dest="from_ip", metavar="ip", help="the first ip to start with", type=str, required=True)
+    parser.add_argument("-P", "--pass", dest="password", metavar="pwd", help="ssh password used to access the remote devices", type=str, required=True)
+    parser.add_argument("-u", "--user", dest="user", metavar="usr", help="ssh user used to access the remote devices", type=str, default="kerr")
+    parser.add_argument("-d", "--zips-dir", dest="dir", metavar="dir", help="directory containing all the certificate zip files", type=str, required=True)
+    args = parser.parse_args(sys.argv[1:])
+
+    if not os.path.isdir(args.dir):
+        parser.error(f"zips directory {args.dir} does not exist")
+    if args.page is None:
+        if args.pages is None:
+            parser.error("provide page or pages flag")
+        elif args.pages <= 0:
+            parser.error("pages number must be a positive integer")
+        elif args.page_items is None:
+            parser.error("specify the items per page flag")
+        elif args.page_items <= 0:
+            parser.error("page items number must be a positive integer")
+    return args
+
+@dataclass
+class InjectorLauncher:
+    page: int
+    args: any
+    threads: List[int]
+    def launch(self):
+        for item_counter in range(self.args.page_items):
+            cursor = self.page * self.args.page_items + item_counter
+            device_id, ip = cursor + 1, int(ipa(self.args.from_ip)) + cursor
+            print(f"processing ip {ipa(ip)}... with id {device_id}, page: {self.page}")
+            conf = InjectorConf(ip=ipa(ip),
+                password=self.args.password,
+                user=self.args.user,
+                slot_number=device_id,
+                zips_dir=self.args.dir
+            )
+            process = Injector(conf)
+            self.threads.append((process.thread, device_id, ipa(ip)))
+            process.thread.start()
+        for thread, device_id, ip in self.threads:
+            thread.join()
+
+def main():
+    args = parse_args()
+    threads: List[int] = []
+    if args.pages is not None:
+        for page in range(args.pages):
+            print(f">>> page {page+1} starting...")
+            InjectorLauncher(page=page, args=args, threads=threads).launch()
+    else:
+        InjectorLauncher(page=args.page-1, args=args, threads=threads).launch()
+
+if __name__ == "__main__":
+    main()
