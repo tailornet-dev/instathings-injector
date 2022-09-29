@@ -31,8 +31,6 @@ class Injector:
         scp_command=f"sshpass -p {self.conf.password} scp {ssh_flag} {self.conf.zips_dir}/{zip_file} {remote_hostname_arg}:/home/{self.conf.user}/{zip_file}"
         launch_script_command = f"sshpass -p {self.conf.password} ssh {ssh_flag} {remote_hostname_arg}"
         script = f"""
-        ls -l
-        exit
         set -e
         cd /home/{self.conf.user}
         zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
@@ -76,7 +74,7 @@ class InjectorLauncher:
         for item_counter in range(self.args.page_items):
             cursor = self.page * self.args.page_items + item_counter
             device_id, ip = cursor + 1, int(ipa(self.args.from_ip)) + cursor
-            print(f"processing ip {ipa(ip)}... with id {device_id}, page: {self.page}")
+            print(f"processing ip {ipa(ip)}... with id {device_id}")
             conf = InjectorConf(ip=ipa(ip),
                 password=self.args.password,
                 user=self.args.user,
