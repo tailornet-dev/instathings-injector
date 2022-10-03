@@ -86,7 +86,7 @@ class InjectorLauncher:
     def launch(self):
         for item_counter in range(self.args.page_items):
             cursor = self.page * self.args.page_items + item_counter
-            device_id, ip = cursor + 1, int(ipa(self.args.from_ip)) + cursor
+            device_id, ip = cursor + 1, int(ipa(self.args.from_ip)) + item_counter
             ip_str = str(ipa(ip))
             print(f"processing ip {ip_str}... with id {device_id}")
             conf = InjectorConf(ip=ip_str,
