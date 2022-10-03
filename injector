@@ -38,7 +38,6 @@ class Injector:
         script = f"""
         set -e
         cd /home/{self.conf.user}
-        truncate --size 0 .ssh/known_hosts
         zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
         unzip "$zip_file"
         chmod 755 install.sh
@@ -101,6 +100,7 @@ class InjectorLauncher:
             process.thread.start()
         for thread, device_id, ip in self.threads:
             thread.join()
+        os.system(f"truncate --size 0 /home/{self.args.user}/.ssh/known_hosts")
 
 def main():
     args = parse_args()
