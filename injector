@@ -42,6 +42,7 @@ class Injector:
         unzip "$zip_file"
         chmod 755 install.sh
         ./install.sh
+        sudo shutdown now
         """
         os.system(scp_command)
         os.system(f"{launch_script_command} '{script}'")
