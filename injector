@@ -38,7 +38,7 @@ class Injector:
         script = f"""
         set -e
         cd /home/{self.conf.user}
-        rm .ssh/known_hosts
+        truncate --size 0 .ssh/known_hosts
         zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
         unzip "$zip_file"
         chmod 755 install.sh
