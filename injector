@@ -42,7 +42,13 @@ class Injector:
             unzip -o "$zip_file"
             chmod 755 install.sh
             ./install.sh
-            wget -O -P "/home/$USER/Desktop" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+            teamdir=/home/$USER/Desktop
+            teamfile="$teamdir/teamviewer-host_arm64.deb"
+            set +e
+            rm "$teamfile"
+            set -e
+            wget -P "$teamdir" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+            chmod +x $teamfile
             curl -s https://raw.githubusercontent.com/tailornet-dev/gate-fixer/master/script.sh | bash
             sudo shutdown now
         '''.format(self.conf.user, zip_file)
