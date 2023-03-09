@@ -36,19 +36,12 @@ class Injector:
         scp_command=f"sshpass -p {self.conf.password} scp {ssh_flag} {self.conf.zips_dir}/{zip_file} {remote_hostname_arg}:/home/{self.conf.user}/{zip_file}"
         launch_script_command = f"sshpass -p {self.conf.password} ssh {ssh_flag} {remote_hostname_arg}"
         script = '''
-            function installCron() {{
-                count="$(crontab -l | grep 'docker restart' | wc -l)"
-                if [ $count -eq 0 ]; then
-                    crontab -l 2>/dev/null; echo "5 * * * * docker restart instathings-modbus2mqtt" | crontab -
-                fi
-            }}
             set -e
             cd /home/{}
             zip_file="$(ls -1 | egrep {} | head -n 1)"
             unzip -o "$zip_file"
             chmod 755 install.sh
             ./install.sh
-            installCron
             wget -O -P "/home/$USER/Desktop" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
             sudo shutdown now
         '''.format(self.conf.user, zip_file)
