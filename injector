@@ -45,7 +45,7 @@ class Injector:
         set -e
         cd /home/{}
         zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
-        unzip "$zip_file"
+        unzip -o "$zip_file"
         chmod 755 install.sh
         ./install.sh
         installCron
