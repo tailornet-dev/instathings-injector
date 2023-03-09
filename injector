@@ -49,7 +49,7 @@ class Injector:
             chmod 755 install.sh
             ./install.sh
             installCron
-            wget -P "/home/$USER/Desktop" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+            wget -O -P "/home/$USER/Desktop" https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
             sudo shutdown now
         '''.format(self.conf.user, zip_file)
         os.system(scp_command)
