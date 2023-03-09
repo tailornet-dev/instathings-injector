@@ -35,15 +35,22 @@ class Injector:
         remote_hostname_arg=f"{self.conf.user}@{self.conf.ip}"
         scp_command=f"sshpass -p {self.conf.password} scp {ssh_flag} {self.conf.zips_dir}/{zip_file} {remote_hostname_arg}:/home/{self.conf.user}/{zip_file}"
         launch_script_command = f"sshpass -p {self.conf.password} ssh {ssh_flag} {remote_hostname_arg}"
-        script = f"""
+        script = '''
+        function installCron() {
+            count="$(crontab -l | grep 'docker restart' | wc -l)"
+            if [ $count -eq 0 ]; then
+                crontab -l 2>/dev/null; echo "5 * * * * docker restart instathings-modbus2mqtt" | crontab -
+            fi
+        }
         set -e
-        cd /home/{self.conf.user}
+        cd /home/{}
         zip_file="$(ls -1 | egrep {zip_file} | head -n 1)"
         unzip "$zip_file"
         chmod 755 install.sh
         ./install.sh
+        installCron
         sudo shutdown now
-        """
+        '''.format(self.conf.user, zip_file)
         os.system(scp_command)
         os.system(f"{launch_script_command} '{script}'")
 
